@@ -17,7 +17,6 @@
 
 package com.yahoo.ycsb.db;
 
-import static org.elasticsearch.common.settings.Settings.Builder;
 import static org.elasticsearch.common.xcontent.XContentFactory.jsonBuilder;
 import static org.elasticsearch.index.query.QueryBuilders.rangeQuery;
 import static org.elasticsearch.node.NodeBuilder.nodeBuilder;
@@ -36,7 +35,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.settings.ImmutableSettings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.index.query.RangeQueryBuilder;
@@ -102,7 +101,7 @@ public class ElasticsearchClient extends DB {
     int numberOfReplicas = parseIntegerProperty(props, "es.number_of_replicas", NUMBER_OF_REPLICAS);
 
     Boolean newdb = Boolean.parseBoolean(props.getProperty("es.newdb", "false"));
-    Builder settings = Settings.settingsBuilder()
+    ImmutableSettings.Builder settings = ImmutableSettings.settingsBuilder()
         .put("cluster.name", DEFAULT_CLUSTER_NAME)
         .put("node.local", Boolean.toString(!remoteMode))
         .put("path.home", pathHome);
@@ -123,7 +122,7 @@ public class ElasticsearchClient extends DB {
       // Default it to localhost:9300
       String[] nodeList = props.getProperty("es.hosts.list", DEFAULT_REMOTE_HOST).split(",");
       System.out.println("Elasticsearch Remote Hosts = " + props.getProperty("es.hosts.list", DEFAULT_REMOTE_HOST));
-      TransportClient tClient = TransportClient.builder().settings(settings).build();
+      TransportClient tClient = new TransportClient(settings);
       for (String h : nodeList) {
         String[] nodes = h.split(":");
         try {
@@ -155,7 +154,7 @@ public class ElasticsearchClient extends DB {
       client.admin().indices().create(
               new CreateIndexRequest(indexKey)
                       .settings(
-                              Settings.builder()
+                              ImmutableSettings.builder()
                                       .put("index.number_of_shards", numberOfShards)
                                       .put("index.number_of_replicas", numberOfReplicas)
                                       .put("index.mapping._id.indexed", true)
